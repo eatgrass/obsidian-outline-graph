@@ -1,5 +1,6 @@
 import { MarkdownPostProcessorContext } from 'obsidian';
 import { select } from 'd3-selection';
+import { zoom, zoomIdentity, D3ZoomEvent } from 'd3-zoom';
 import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, SimulationLinkDatum, SimulationNodeDatum } from 'd3-force';
 
 interface NodeDatum extends SimulationNodeDatum { id: string; label: string }
@@ -76,7 +77,10 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 		.attr('height', height)
 		.style('background', 'transparent');
 
-	const link = svg
+	// 根分组用于缩放和平移
+	const root = svg.append('g').attr('class', 'root');
+
+	const link = root
 		.append('g')
 		.attr('class', 'links')
 		.selectAll('line')
@@ -87,7 +91,7 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 		.attr('stroke-opacity', 0.6)
 		.attr('stroke-width', 1);
 
-	const node = svg
+	const node = root
 		.append('g')
 		.attr('class', 'nodes')
 		.selectAll('g')
@@ -137,4 +141,13 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 		});
 		ro.observe(container);
 	}
+
+	// 绑定缩放（平移/缩放）
+	const zoomBehavior = zoom<SVGSVGElement, unknown>()
+		.scaleExtent([0.25, 4])
+		.on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
+			root.attr('transform', event.transform.toString());
+		});
+
+	svg.call(zoomBehavior as any).call(zoomBehavior.transform as any, zoomIdentity);
 }
