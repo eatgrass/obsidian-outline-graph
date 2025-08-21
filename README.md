@@ -1,4 +1,5 @@
 ## Outline Graph (Obsidian plugin)
+<img width="1654" height="1226" alt="image" src="https://github.com/user-attachments/assets/338e9041-f46d-4828-95b6-46c196dc88f5" />
 
 Render Markdown lists as a force-directed graph and open them in a dedicated Obsidian view.
 
