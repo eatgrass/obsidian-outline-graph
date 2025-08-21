@@ -15,7 +15,7 @@ Render Markdown lists as a force-directed graph and open them in a dedicated Obs
 ### Quick start
 Insert an `outline` code block in any note:
 
-```markdown
+<pre>
 ```outline
 Project
   Backend
@@ -25,7 +25,7 @@ Project
 Docs
   README
 ```
-```
+</pre>
 
 The rendered graph will show `Project` and `Docs` as roots with edges to their children.
 
@@ -61,8 +61,6 @@ Root nodes have the `root-node` class applied to both circle and text elements. 
 
 /* Customize root node text styles */
 .outline-graph-svg .root-node.node-text {
-    /* Modify root node text styles */
-    font-family: 'Your Font', sans-serif;
     fill: #2d3436; /* Custom text color */
     font-size: 14px; /* Custom font size */
 }
