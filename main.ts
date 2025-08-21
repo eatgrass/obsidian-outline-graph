@@ -13,7 +13,10 @@ export default class OutlineGraphPlugin extends Plugin {
 
 		// Register outline code block renderer and pass open method
 		this.registerMarkdownCodeBlockProcessor('outline', async (source, el, ctx) => {
-			await renderOutlineBlock(source, el, ctx, { openOutlineGraphView: (s) => this.openOutlineGraphView(s) });
+			await renderOutlineBlock(source, el, ctx, { 
+				openOutlineGraphView: (s) => this.openOutlineGraphView(s),
+				settings: this.settings
+			});
 		});
 
 

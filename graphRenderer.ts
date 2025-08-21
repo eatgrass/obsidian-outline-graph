@@ -7,7 +7,10 @@ import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, f
 interface NodeDatum extends SimulationNodeDatum { id: string; label: string; depth: number; rootId: string }
 type LinkDatum = SimulationLinkDatum<NodeDatum> & { source: string | NodeDatum; target: string | NodeDatum };
 
-type PluginBridge = { openOutlineGraphView?: (source: string) => Promise<void> | void };
+type PluginBridge = { 
+	openOutlineGraphView?: (source: string) => Promise<void> | void;
+	settings?: { showForceControls: boolean };
+};
 
 export async function renderOutlineBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext, plugin?: PluginBridge): Promise<void> {
 	const wrapper = document.createElement('div');
@@ -61,7 +64,7 @@ export async function renderOutlineBlock(source: string, el: HTMLElement, ctx: M
 
 	// Defer until mounted to ensure container size is available
 	requestAnimationFrame(() => {
-		mountOutlineGraph(container, source);
+		mountOutlineGraph(container, source, plugin?.settings?.showForceControls ?? true);
 	});
 }
 
@@ -102,11 +105,14 @@ function parseMarkdownListToGraph(source: string): { nodes: NodeDatum[]; links: 
 	};
 
 	for (const rawLine of lines) {
-		// Match markdown list items: - * + or ordered like 1.
-		const match = rawLine.match(/^(\s*)([-*+]|\d+\.)\s+(.*)$/);
+		// Skip empty lines
+		if (!rawLine.trim()) continue;
+		
+		// Get indentation and content
+		const match = rawLine.match(/^(\s*)(.*)$/);
 		if (!match) continue;
 		const indentWs = match[1] ?? '';
-		const content = (match[3] ?? '').trim();
+		const content = (match[2] ?? '').trim();
 
 		// Determine indent unit on first indented item; prefer 4 then 2, else exact width
 		const width = getIndentWidth(indentWs);
@@ -140,7 +146,7 @@ function parseMarkdownListToGraph(source: string): { nodes: NodeDatum[]; links: 
 	return { nodes, links };
 }
 
-function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: LinkDatum[]): void {
+function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: LinkDatum[], showForceControls: boolean = true): void {
 	// Clear container
 	container.textContent = '';
 
@@ -200,24 +206,68 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 	const baseR = Math.max(80, Math.min(width, height) / 2 - 60);
 	const layerSpacing = Math.max(60, Math.min(width, height) / 10);
 
-	const anchorByRoot: Record<string, { x: number; y: number }> = {};
-	roots.forEach((r, i) => {
-		const angle = (2 * Math.PI * i) / rootCount;
-		anchorByRoot[r.id] = { x: cx + baseR * Math.cos(angle), y: cy + baseR * Math.sin(angle) };
+	// Disjoint force-directed layout inspired by Observable
+	// Group nodes by their root
+	const groups = new Map<string, NodeDatum[]>();
+	roots.forEach(root => {
+		groups.set(root.id, [root]);
+	});
+	
+	// Add children to their root groups
+	nodes.forEach(node => {
+		if (node.depth > 0) {
+			const group = groups.get(node.rootId);
+			if (group) group.push(node);
+		}
 	});
 
-	const desired = (d: NodeDatum) => {
-		const anchor = anchorByRoot[d.rootId] ?? { x: cx, y: cy };
-		const vx = anchor.x - cx;
-		const vy = anchor.y - cy;
-		const len = Math.hypot(vx, vy) || 1;
-		const ux = vx / len;
-		const uy = vy / len;
-		const radius = baseR + d.depth * layerSpacing;
-		return { x: cx + ux * radius, y: cy + uy * radius };
-	};
+	// Calculate group positions in a circle
+	const groupPositions = new Map<string, { x: number; y: number }>();
+	const groupCount = groups.size;
+	let groupIndex = 0;
+	
+	for (const [rootId, groupNodes] of groups) {
+		const angle = (2 * Math.PI * groupIndex) / groupCount;
+		const groupX = cx + baseR * Math.cos(angle);
+		const groupY = cy + baseR * Math.sin(angle);
+		groupPositions.set(rootId, { x: groupX, y: groupY });
+		groupIndex++;
+	}
 
-	const linkForce = forceLink<NodeDatum, LinkDatum>(links)
+	// Create separate simulations for each group
+	const simulations: any[] = [];
+	
+	for (const [rootId, groupNodes] of groups) {
+		// Get links within this group
+		const groupLinks = links.filter(link => {
+			const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+			const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+			return groupNodes.some(n => n.id === sourceId) && groupNodes.some(n => n.id === targetId);
+		});
+
+		// Create simulation for this group
+		const groupSim = forceSimulation<NodeDatum>(groupNodes)
+			.force('link', forceLink<NodeDatum, LinkDatum>(groupLinks).id(d => d.id).distance(50).strength(0.3))
+			.force('charge', forceManyBody().strength(-100))
+			.force('collision', forceCollide(12));
+
+		// Position the group
+		const groupPos = groupPositions.get(rootId)!;
+		groupSim.force('center', forceCenter(groupPos.x, groupPos.y));
+		
+		simulations.push(groupSim);
+	}
+
+	// Combine all nodes for the main simulation
+	const allNodes = Array.from(groups.values()).flat();
+	const allLinks = links.filter(link => {
+		const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+		const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+		return allNodes.some(n => n.id === sourceId) && allNodes.some(n => n.id === targetId);
+	});
+
+	// Define forces for the main simulation
+	const linkForce = forceLink<NodeDatum, LinkDatum>(allLinks)
 		.id((d: NodeDatum) => d.id)
 		.distance(70)
 		.strength(0.4);
@@ -225,11 +275,9 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 	const centerXForce = forceX<NodeDatum>(cx).strength(0.15);
 	const centerYForce = forceY<NodeDatum>(cy).strength(0.15);
 
-	const sim = forceSimulation<NodeDatum>(nodes)
+	const sim = forceSimulation<NodeDatum>(allNodes)
 		.force('link', linkForce)
 		.force('charge', chargeForce)
-		.force('posX', forceX<NodeDatum>().x(d => desired(d).x).strength((d: NodeDatum) => (d.depth === 0 ? 0.25 : 0.06) as unknown as number))
-		.force('posY', forceY<NodeDatum>().y(d => desired(d).y).strength((d: NodeDatum) => (d.depth === 0 ? 0.25 : 0.06) as unknown as number))
 		.force('centerX', centerXForce)
 		.force('centerY', centerYForce)
 		.force('center', forceCenter(cx, cy))
@@ -268,6 +316,9 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 		node.attr('transform', (d: any) => `translate(${d.x ?? 0},${d.y ?? 0})`);
 	});
 
+	// Start all group simulations
+	simulations.forEach(sim => sim.alpha(1).restart());
+
 	// Resize-aware: re-center and relayout on container size changes
 	if ('ResizeObserver' in window) {
 		const ro = new ResizeObserver(entries => {
@@ -297,7 +348,8 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 
 	svg.call(zoomBehavior as any).call(zoomBehavior.transform as any, zoomIdentity);
 
-	// Force controls (approximate Obsidian Graph parameters)
+	// Force controls (approximate Obsidian Graph parameters) - only show if enabled
+	if (showForceControls) {
 	const controls = document.createElement('div');
 	controls.style.position = 'absolute';
 	controls.style.left = '8px';
@@ -331,6 +383,7 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 	toggle.style.display = 'flex';
 	toggle.style.alignItems = 'center';
 	toggle.style.justifyContent = 'center';
+	toggle.style.color = 'var(--text-normal)';
 
 	header.appendChild(title);
 	header.appendChild(toggle);
@@ -371,21 +424,25 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 	addSlider('Center force', 0, 1, 0.01, 0.15, (v) => {
 		centerXForce.strength(v);
 		centerYForce.strength(v);
+		simulations.forEach(sim => sim.alpha(0.3).restart());
 	});
 
 	// Repel force: d3.forceManyBody negative strength
 	addSlider('Repel force', 0, 400, 1, 160, (v) => {
 		chargeForce.strength(-v);
+		simulations.forEach(sim => sim.alpha(0.3).restart());
 	});
 
 	// Link force strength
 	addSlider('Link force', 0, 1, 0.01, 0.4, (v) => {
 		(linkForce as any).strength(v);
+		simulations.forEach(sim => sim.alpha(0.3).restart());
 	});
 
 	// Link distance
 	addSlider('Link distance', 20, 300, 1, 70, (v) => {
 		(linkForce as any).distance(v);
+		simulations.forEach(sim => sim.alpha(0.3).restart());
 	});
 
 	// Only show controls on hover to reduce clutter
@@ -406,11 +463,10 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 	const updateCollapsed = () => {
 		if (collapsed) {
 			content.style.display = 'none';
-			// use chevron-down for collapsed
-			try { (setIcon as any)(toggle, 'chevron-down'); } catch {}
+			setIcon(toggle, 'chevron-right');
 		} else {
 			content.style.display = 'flex';
-			try { (setIcon as any)(toggle, 'chevron-up'); } catch {}
+			setIcon(toggle, 'chevron-up');
 		}
 	};
 	toggle.addEventListener('click', (e) => {
@@ -419,9 +475,10 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 		updateCollapsed();
 	});
 	updateCollapsed();
+	}
 }
 
-export function mountOutlineGraph(container: HTMLElement, source: string): void {
+export function mountOutlineGraph(container: HTMLElement, source: string, showForceControls: boolean = true): void {
 	const { nodes, links } = parseMarkdownListToGraph(source);
-	renderForceGraph(container, nodes, links);
+	renderForceGraph(container, nodes, links, showForceControls);
 }

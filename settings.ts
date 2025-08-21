@@ -1,11 +1,11 @@
 import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 export interface OutlineGraphSettings {
-	mySetting: string;
+	showForceControls: boolean;
 }
 
 export const DEFAULT_SETTINGS: OutlineGraphSettings = {
-	mySetting: 'default'
+	showForceControls: true
 };
 
 export type OutlineGraphPluginLike = Plugin & {
@@ -21,19 +21,18 @@ export class OutlineGraphSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	display(): void {
+		display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc("It's a secret")
-			.addText((text) =>
-				text
-					.setPlaceholder('Enter your secret Here')
-					.setValue(this.plugin.settings.mySetting)
+			.setName('Show Force Controls')
+			.setDesc('Display the force control panel on graph hover')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showForceControls)
 					.onChange(async (value) => {
-						this.plugin.settings.mySetting = value;
+						this.plugin.settings.showForceControls = value;
 						await this.plugin.saveSettings();
 					})
 			);

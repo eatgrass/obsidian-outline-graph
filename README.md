@@ -17,13 +17,13 @@ Insert an `outline` code block in any note:
 
 ```markdown
 ```outline
-- Project
-  - Backend
-    - API
-  - Frontend
-    - UI
-- Docs
-  - README
+Project
+  Backend
+    API
+  Frontend
+    UI
+Docs
+  README
 ```
 ```
 
@@ -35,7 +35,7 @@ The rendered graph will show `Project` and `Docs` as roots with edges to their c
 
 
 ### Parsing & rendering details
-- Supported list markers: `-`, `*`, `+`, and ordered lists like `1.`
+- Pure indentation-based parsing: no need for list markers like `-`, `*`, `+`, or `1.`
 - Indent detection: supports spaces and tabs (mixed). The indent unit is inferred on the first indented item (prefers 4 spaces, otherwise 2, otherwise the measured width). Levels are calculated by `floor(indentWidth / unit)`.
 - Interactions:
   - Drag empty area → pan
