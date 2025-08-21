@@ -30,7 +30,7 @@ export default class OutlineGraphPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		// Clean up any resources when plugin unloads
 	}
 
 	async loadSettings() {
@@ -42,7 +42,7 @@ export default class OutlineGraphPlugin extends Plugin {
 	}
 
 	async openOutlineGraphView(source: string): Promise<void> {
-		const leaf: WorkspaceLeaf = this.app.workspace.getLeaf(true);
+		const leaf = this.app.workspace.getLeaf(true);
 		await leaf.setViewState({ type: OUTLINE_GRAPH_VIEW_TYPE, active: true });
 		const view = leaf.view as OutlineGraphView;
 		(view as any).source = source;

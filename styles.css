@@ -1,8 +1,157 @@
-/*
+/* Outline Graph Plugin Styles */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.outline-graph-wrapper {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
 
-If your plugin does not need CSS, delete this file.
+.outline-graph-container {
+	width: 100%;
+	height: 320px;
+	position: relative;
+}
 
-*/
+.outline-graph-open-btn {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	top: auto;
+	padding: 0;
+	width: 28px;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border-radius: 4px;
+	cursor: pointer;
+	z-index: 1;
+	opacity: 0;
+	transition: opacity 150ms ease;
+	pointer-events: none;
+}
+
+.outline-graph-open-btn:hover {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.outline-graph-wrapper:hover .outline-graph-open-btn {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.outline-graph-wrapper:not(:hover) .outline-graph-open-btn {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.outline-graph-controls {
+	position: absolute;
+	left: 8px;
+	top: 8px;
+	padding: 8px;
+	border-radius: 6px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	font-size: 12px;
+	min-width: 180px;
+	opacity: 0.95;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	pointer-events: none;
+	transition: opacity 150ms ease;
+}
+
+.outline-graph-container:hover .outline-graph-controls {
+	opacity: 0.95;
+	pointer-events: auto;
+}
+
+.outline-graph-container:not(:hover) .outline-graph-controls {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.outline-graph-controls-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.outline-graph-controls-title {
+	font-weight: 600;
+}
+
+.outline-graph-controls-toggle {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-normal);
+}
+
+.outline-graph-controls-content {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.outline-graph-controls-content.collapsed {
+	display: none;
+}
+
+.outline-graph-controls-row {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 8px;
+}
+
+.outline-graph-controls-row:last-child {
+	margin-bottom: 0;
+}
+
+.outline-graph-view-container {
+	height: 100%;
+}
+
+/* Link styles */
+.outline-graph-svg .link-line {
+	stroke: var(--background-modifier-border);
+	stroke-opacity: 0.6;
+	stroke-width: 1px;
+}
+
+/* Node styles */
+.outline-graph-svg .node-circle {
+	fill: var(--text-muted);
+}
+
+.outline-graph-svg .node-text {
+	fill: var(--text-normal);
+	font-size: 10px;
+}
+
+/* Root node styles */
+.outline-graph-svg .root-node.node-circle {
+	r: 6px;
+	fill: var(--text-normal);
+	stroke: var(--text-normal);
+	stroke-width: 2px;
+}
+
+.outline-graph-svg .root-node.node-text {
+	fill: var(--text-normal);
+	font-size: 12px;
+	font-weight: 600;
+}

@@ -26,7 +26,7 @@ export class OutlineGraphSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Show Force Controls')
+			.setName('Show force controls')
 			.setDesc('Display the force control panel on graph hover')
 			.addToggle((toggle) =>
 				toggle

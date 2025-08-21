@@ -14,9 +14,7 @@ type PluginBridge = {
 
 export async function renderOutlineBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext, plugin?: PluginBridge): Promise<void> {
 	const wrapper = document.createElement('div');
-	wrapper.style.position = 'relative';
-	wrapper.style.width = '100%';
-	wrapper.style.height = '100%';
+	wrapper.className = 'outline-graph-wrapper';
 
 	const container = createOutlineElement();
 	wrapper.appendChild(container);
@@ -26,39 +24,11 @@ export async function renderOutlineBlock(source: string, el: HTMLElement, ctx: M
 	openBtn.className = 'outline-graph-open-btn';
 	openBtn.ariaLabel = 'Open in View';
 	openBtn.title = 'Open in a dedicated view';
-	openBtn.style.position = 'absolute';
-	openBtn.style.right = '8px';
-	openBtn.style.bottom = '8px';
-	openBtn.style.top = 'auto';
-	openBtn.style.padding = '0';
-	openBtn.style.width = '28px';
-	openBtn.style.height = '28px';
-	openBtn.style.display = 'flex';
-	openBtn.style.alignItems = 'center';
-	openBtn.style.justifyContent = 'center';
-	openBtn.style.border = 'none';
-	openBtn.style.background = 'var(--background-primary)';
-	openBtn.style.color = 'var(--text-normal)';
-	openBtn.style.borderRadius = '4px';
-	openBtn.style.cursor = 'pointer';
-	openBtn.style.zIndex = '1';
-	openBtn.style.opacity = '0';
-	openBtn.style.transition = 'opacity 150ms ease';
-	openBtn.style.pointerEvents = 'none';
 	setIcon(openBtn, 'maximize-2');
 	openBtn.addEventListener('click', () => {
 		if (plugin?.openOutlineGraphView) plugin.openOutlineGraphView(source);
 	});
 	wrapper.appendChild(openBtn);
-
-	wrapper.addEventListener('mouseenter', () => {
-		openBtn.style.opacity = '1';
-		openBtn.style.pointerEvents = 'auto';
-	});
-	wrapper.addEventListener('mouseleave', () => {
-		openBtn.style.opacity = '0';
-		openBtn.style.pointerEvents = 'none';
-	});
 
 	el.appendChild(wrapper);
 
@@ -70,10 +40,7 @@ export async function renderOutlineBlock(source: string, el: HTMLElement, ctx: M
 
 export function createOutlineElement(): HTMLElement {
 	const container = document.createElement('div');
-	container.className = 'outline-block-rendered outline-graph';
-	container.style.width = '100%';
-	container.style.height = '320px';
-	container.style.position = 'relative';
+	container.className = 'outline-block-rendered outline-graph outline-graph-container';
 	return container;
 }
 
@@ -172,9 +139,7 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 		.data(links)
 		.enter()
 		.append('line')
-		.attr('stroke', 'var(--background-modifier-border)')
-		.attr('stroke-opacity', 0.6)
-		.attr('stroke-width', 1);
+		.attr('class', 'link-line');
 
 	const node = root
 		.append('g')
@@ -188,15 +153,14 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 	node
 		.append('circle')
 		.attr('r', 4)
-		.attr('fill', 'var(--text-muted)');
+		.attr('class', (d: NodeDatum) => d.depth === 0 ? 'node-circle root-node' : 'node-circle');
 
 	node
 		.append('text')
 		.text((d: NodeDatum) => d.label)
-		.attr('x', 6)
+		.attr('x', (d: NodeDatum) => d.depth === 0 ? 8 : 6) // 根节点文本位置调整，保持间距一致
 		.attr('y', 3)
-		.attr('fill', 'var(--text-normal)')
-		.attr('font-size', '10px');
+		.attr('class', (d: NodeDatum) => d.depth === 0 ? 'node-text root-node' : 'node-text');
 
 	const band = Math.max(80, height / (Math.max(...nodes.map(n => n.depth)) + 2));
 	const cx = width / 2;
@@ -351,57 +315,28 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 	// Force controls (approximate Obsidian Graph parameters) - only show if enabled
 	if (showForceControls) {
 	const controls = document.createElement('div');
-	controls.style.position = 'absolute';
-	controls.style.left = '8px';
-	controls.style.top = '8px';
-	controls.style.padding = '8px';
-	controls.style.borderRadius = '6px';
-	controls.style.background = 'var(--background-primary)';
-	controls.style.border = '1px solid var(--background-modifier-border)';
-	controls.style.color = 'var(--text-normal)';
-	controls.style.fontSize = '12px';
-	controls.style.minWidth = '180px';
-	controls.style.opacity = '0.95';
-	controls.style.display = 'flex';
-	controls.style.flexDirection = 'column';
-	controls.style.gap = '6px';
+	controls.className = 'outline-graph-controls';
 
 	// Header with collapse toggle
 	const header = document.createElement('div');
-	header.style.display = 'flex';
-	header.style.alignItems = 'center';
-	header.style.justifyContent = 'space-between';
+	header.className = 'outline-graph-controls-header';
 	const title = document.createElement('div');
 	title.textContent = 'Forces';
-	title.style.fontWeight = '600';
+	title.className = 'outline-graph-controls-title';
 	const toggle = document.createElement('button');
-	toggle.style.border = 'none';
-	toggle.style.background = 'transparent';
-	toggle.style.cursor = 'pointer';
-	toggle.style.width = '24px';
-	toggle.style.height = '24px';
-	toggle.style.display = 'flex';
-	toggle.style.alignItems = 'center';
-	toggle.style.justifyContent = 'center';
-	toggle.style.color = 'var(--text-normal)';
+	toggle.className = 'outline-graph-controls-toggle';
 
 	header.appendChild(title);
 	header.appendChild(toggle);
 	controls.appendChild(header);
 
 	const content = document.createElement('div');
-	content.style.display = 'block';
-	content.style.gap = '8px';
-	content.style.display = 'flex';
-	content.style.flexDirection = 'column';
+	content.className = 'outline-graph-controls-content';
 	controls.appendChild(content);
 
 	const addSlider = (labelText: string, min: number, max: number, step: number, value: number, onInput: (v: number) => void) => {
 		const row = document.createElement('div');
-		row.style.display = 'flex';
-		row.style.flexDirection = 'column';
-		row.style.gap = '4px';
-		row.style.marginBottom = '8px';
+		row.className = 'outline-graph-controls-row';
 		const label = document.createElement('label');
 		label.textContent = labelText;
 		const input = document.createElement('input');
@@ -445,27 +380,17 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 		simulations.forEach(sim => sim.alpha(0.3).restart());
 	});
 
-	// Only show controls on hover to reduce clutter
-	controls.style.pointerEvents = 'none';
-	controls.style.transition = 'opacity 150ms ease';
+	// Controls are shown/hidden via CSS hover states
 	container.appendChild(controls);
-	container.addEventListener('mouseenter', () => {
-		controls.style.opacity = '0.95';
-		controls.style.pointerEvents = 'auto';
-	});
-	container.addEventListener('mouseleave', () => {
-		controls.style.opacity = '0';
-		controls.style.pointerEvents = 'none';
-	});
 
 	// Collapse logic
 	let collapsed = false;
 	const updateCollapsed = () => {
 		if (collapsed) {
-			content.style.display = 'none';
+			content.classList.add('collapsed');
 			setIcon(toggle, 'chevron-right');
 		} else {
-			content.style.display = 'flex';
+			content.classList.remove('collapsed');
 			setIcon(toggle, 'chevron-up');
 		}
 	};

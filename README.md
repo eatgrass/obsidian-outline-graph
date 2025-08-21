@@ -42,5 +42,76 @@ The rendered graph will show `Project` and `Docs` as roots with edges to their c
   - Drag node → move node
   - Mouse wheel → zoom
 
+### Custom Styling
+
+You can customize the appearance of nodes and root nodes through CSS. In Obsidian, you can add the following styles in Settings → Appearance → CSS snippets:
+
+#### Customize Root Node Styles
+
+Root nodes have the `root-node` class applied to both circle and text elements. You can customize them using the following CSS selectors:
+
+```css
+/* Customize root node circle styles */
+.outline-graph-svg .root-node.node-circle {
+    /* Modify root node circle styles */
+    stroke: #ff6b6b; /* Custom border color */
+    stroke-width: 3px; /* Custom border width */
+    r: 8px; /* Custom radius */
+}
+
+/* Customize root node text styles */
+.outline-graph-svg .root-node.node-text {
+    /* Modify root node text styles */
+    font-family: 'Your Font', sans-serif;
+    fill: #2d3436; /* Custom text color */
+    font-size: 14px; /* Custom font size */
+}
+```
+
+#### Customize All Node Styles
+
+```css
+/* Customize all node circles */
+.outline-graph-svg .node-circle {
+    /* Modify all node circle styles */
+    fill: #74b9ff; /* Custom fill color */
+    r: 5px; /* Custom radius */
+}
+
+/* Customize all node text */
+.outline-graph-svg .node-text {
+    /* Modify all node text styles */
+    font-size: 11px;
+    fill: #2d3436;
+}
+```
+
+#### Customize Link Styles
+
+```css
+/* Customize connection lines */
+.outline-graph-svg .link-line {
+    stroke: #636e72; /* Custom line color */
+    stroke-width: 2px; /* Custom line width */
+    stroke-opacity: 0.8; /* Custom opacity */
+}
+```
+
+#### Adding Hover Effects
+
+```css
+/* Node hover effects */
+.outline-graph-svg .nodes g:hover circle {
+    fill: var(--text-accent-hover);
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+.outline-graph-svg .nodes g:hover text {
+    fill: var(--text-accent-hover);
+    font-weight: bold;
+}
+```
+
 
 

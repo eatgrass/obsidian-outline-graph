@@ -21,7 +21,7 @@ export class OutlineGraphView extends ItemView {
 
 	async onOpen() {
 		const container = createOutlineElement();
-		container.style.height = '100%';
+		container.classList.add('outline-graph-view-container');
 		this.containerEl.empty();
 		this.containerEl.appendChild(container);
 		mountOutlineGraph(container, this.source);
