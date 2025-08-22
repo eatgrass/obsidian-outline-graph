@@ -21,7 +21,8 @@ export default class OutlineGraphPlugin extends Plugin {
 
 
 		// Add settings tab for plugin configuration
-		this.addSettingTab(new OutlineGraphSettingTab(this.app, this as any));
+		this.addSettingTab(new OutlineGraphSettingTab(this.app, this));
+
 
 		// Register custom view
 		this.registerView(OUTLINE_GRAPH_VIEW_TYPE, (leaf) => new OutlineGraphView(leaf, ''));
@@ -45,7 +46,7 @@ export default class OutlineGraphPlugin extends Plugin {
 		const leaf = this.app.workspace.getLeaf(true);
 		await leaf.setViewState({ type: OUTLINE_GRAPH_VIEW_TYPE, active: true });
 		const view = leaf.view as OutlineGraphView;
-		(view as any).source = source;
+		view.source = source;
 		await view.onOpen();
 	}
 }

@@ -4,7 +4,7 @@ import { createOutlineElement, mountOutlineGraph } from './graphRenderer';
 export const OUTLINE_GRAPH_VIEW_TYPE = 'outline-graph-view';
 
 export class OutlineGraphView extends ItemView {
-	private source: string;
+	public source: string;
 
 	constructor(leaf: WorkspaceLeaf, source: string) {
 		super(leaf);

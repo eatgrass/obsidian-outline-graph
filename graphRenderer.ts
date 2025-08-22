@@ -1,5 +1,5 @@
 import { MarkdownPostProcessorContext, setIcon } from 'obsidian';
-import { select } from 'd3-selection';
+import { select, Selection } from 'd3-selection';
 import { zoom, zoomIdentity, D3ZoomEvent } from 'd3-zoom';
 import { drag, D3DragEvent } from 'd3-drag';
 import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY, SimulationLinkDatum, SimulationNodeDatum } from 'd3-force';
@@ -199,7 +199,7 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 	}
 
 	// Create separate simulations for each group
-	const simulations: any[] = [];
+	const simulations: ReturnType<typeof forceSimulation<NodeDatum>>[] = [];
 	
 	for (const [rootId, groupNodes] of groups) {
 		// Get links within this group
@@ -263,12 +263,12 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 		})
 		.on('end', (event: D3DragEvent<SVGGElement, NodeDatum, NodeDatum>, d: NodeDatum) => {
 			if (!event.active) sim.alphaTarget(0);
-			d.fx = null as any;
-			d.fy = null as any;
+			d.fx = null;
+			d.fy = null;
 			svg.style('cursor', 'grab');
 		});
 
-	(node as any).call(dragBehavior as any);
+	node.call(dragBehavior);
 
 	sim.on('tick', () => {
 		link
@@ -277,7 +277,7 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 			.attr('x2', (d: LinkDatum) => (typeof d.target === 'object' ? (d.target.x as number ?? 0) : 0))
 			.attr('y2', (d: LinkDatum) => (typeof d.target === 'object' ? (d.target.y as number ?? 0) : 0));
 
-		node.attr('transform', (d: any) => `translate(${d.x ?? 0},${d.y ?? 0})`);
+		node.attr('transform', (d: NodeDatum) => `translate(${d.x ?? 0},${d.y ?? 0})`);
 	});
 
 	// Start all group simulations
@@ -310,7 +310,7 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 			svg.style('cursor', 'grab');
 		});
 
-	svg.call(zoomBehavior as any).call(zoomBehavior.transform as any, zoomIdentity);
+	svg.call(zoomBehavior).call(zoomBehavior.transform, zoomIdentity);
 
 	// Force controls (approximate Obsidian Graph parameters) - only show if enabled
 	if (showForceControls) {
@@ -370,13 +370,13 @@ function renderForceGraph(container: HTMLElement, nodes: NodeDatum[], links: Lin
 
 	// Link force strength
 	addSlider('Link force', 0, 1, 0.01, 0.4, (v) => {
-		(linkForce as any).strength(v);
+		linkForce.strength(v);
 		simulations.forEach(sim => sim.alpha(0.3).restart());
 	});
 
 	// Link distance
 	addSlider('Link distance', 20, 300, 1, 70, (v) => {
-		(linkForce as any).distance(v);
+		linkForce.distance(v);
 		simulations.forEach(sim => sim.alpha(0.3).restart());
 	});
 
